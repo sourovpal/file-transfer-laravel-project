@@ -9,6 +9,7 @@
 	<link href="{{URL::asset('plugins/filepond/filepond.css')}}" rel="stylesheet" />
 	<link href="{{URL::asset('plugins/awselect/awselect.min.css')}}" rel="stylesheet" />
     <link href="{{URL::asset('plugins/datetimepicker/jquery.datetimepicker.min.css')}}" rel="stylesheet" />
+    <link rel="stylesheet" href="{{URL::asset('css/tagsinput.css')}}">
 @endsection
 
 @section('content')
@@ -34,7 +35,7 @@
 
                                             <!-- DRAG & DROP FILES -->
                                             <div class="select-file">
-                                                <input type="file" name="filepond" id="filepond" class="filepond" multiple data-allow-reorder="true" required  />	
+                                                <input type="file" name="filepond" id="filepond" class="filepond" multiple data-allow-reorder="true"  />	
                                             </div>						
                                         </div>
                                     </div>
@@ -59,8 +60,15 @@
                                                 <div class="col-sm-12">								
                                                     <div class="input-box email-box">								
                                                         <h6 class="fs-11 mb-2 font-weight-bold">{{ __('Send To') }}  <span class="text-required"><i class="fa-solid fa-asterisk"></i></span></h6>
-                                                        <div class="form-group">							    
-                                                            <input type="text" class="form-control @error('email-to') is-danger @enderror" id="email-to" name="email_to" autocomplete="off">
+                                                        <div class="form-group">	
+                                                            <div id="email-to-area">
+                                                                <input type="text" class="form-control @error('email-to') is-danger @enderror" id="email-to" name="email_to" autocomplete="off">
+                                                            </div>					    
+                                                            <input style="display:none;" type="file" accept=".csv, .txt" class="form-control @error('email-to-csv') is-danger @enderror" id="email-to-csv" name="email_to_csv" autocomplete="off">
+                                                            <label class="d-flex justify-content-start align-items-center mt-2">
+                                                                <input id="selectCsvFile" type="checkbox" onclick="toggleEmailToTextOrCsvFile(this)" value="1">
+                                                                <span class="ml-3">Upload csv or txt file</span>
+                                                            </label>
                                                             @error('email-to')
                                                                 <p class="text-danger">{{ $errors->first('email-to') }}</p>
                                                             @enderror
@@ -792,7 +800,34 @@
     <!-- Awselect JS -->
     <script src="{{URL::asset('plugins/awselect/awselect-custom.js')}}"></script>
     <script src="{{URL::asset('js/awselect.js')}}"></script>
+    <script src="{{URL::asset('js/tagsinput.js')}}"></script>
+
     <script type="text/javascript">
+        function toggleEmailToTextOrCsvFile(e){
+                var textInputArea = $('#email-to-area');
+                var textInput = $('#email-to');
+                var fileInput = $('#email-to-csv');
+            if(e.checked){
+                textInputArea.hide();
+                fileInput.show();
+            }else{
+                textInputArea.show();
+                fileInput.hide();
+                fileInput.val('');
+            }
+        }
+
+        function addAttributeInput(){
+			$('[name="filepond"]').attr('webkitdirectory', true);
+			$('[name="filepond"]').attr('directory', true);
+            setTimeout(()=>{
+			    $('[name="filepond"]').removeAttr('webkitdirectory');
+			    $('[name="filepond"]').removeAttr('directory');
+            }, 3000);
+        }
+
+        var tags = $('#email-to').inputTags({});
+
 		$(function () {
 
             AOS.init();
@@ -803,8 +838,8 @@
 
             
             $('#datetime').datetimepicker({
-			format:'d M Y H:i:s',
-		});
+			    format:'d M Y H:i:s',
+		    });
 
 
 
@@ -833,7 +868,7 @@
 			FilePond.setOptions({
 				maxFileSize: data['max_file_size'] + 'MB',
 				maxFiles: data['max_file_quantity'],
-				labelIdle: "{{ __('Drag & Drop files to transfer or') }} <span class=\"filepond--label-action\">{{ __('Browse') }}</span><br><span class='restrictions'><span class='restrictions-highlight'>{{ __('Max Size') }}: " + data['max_file_size'] + "MB, {{ __('Max Files') }}: " + data['max_file_quantity'] + "</span></span>",
+				labelIdle: "{{ __('Drag & Drop files to transfer ') }} <span class=\"filepond--label-action\">{{ __('Files') }} / </span><span class='filepond--label-action' onclick='addAttributeInput()'>Folder</span><br><span class='restrictions'><span class='restrictions-highlight'>{{ __('Max Size') }}: " + data['max_file_size'] + "MB, {{ __('Max Files') }}: " + data['max_file_quantity'] + "</span></span>",
 				required: true,
 				server: {
 					process: "tmp-upload",
@@ -851,7 +886,23 @@
 
 		// CREATE FILEPOND INSTANCE
 		let pond = FilePond.create(document.querySelector('.filepond'));
+        var emailToList = [];
+        $('#email-to-csv').on('change', function(e){
+        var file = e.target.files[0];
+        if (!file) return;
 
+        var reader = new FileReader();
+        reader.onload = function(e){
+            var contents = e.target.result;
+            var lines = e.target.result.split('\r\n');
+            for (var i = 0; i < lines.length; i++) {
+                if(lines[i].trim()){
+                    emailToList.push(lines[i].trim());
+                }
+            }
+        };
+        reader.readAsText(file);
+    });
 
 		// SUBMIT FORM
 		$('#multipartupload').on('submit', function(e) {
@@ -859,12 +910,21 @@
 			e.preventDefault();
 
 			let form = $(this);
-
+            var formdata = form.serializeArray();
+            var data = {};
+            $(formdata).each(function(index, obj){
+                if(obj.name === 'email_to' && $('#email-to-csv').val()){
+                    data[obj.name] = emailToList.join(', ');
+                }else{
+                    data[obj.name] = obj.value;
+                }
+            });
+            
 			$.ajax({
 				headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
 				method: 'POST',
 				url: 'upload',
-				data: form.serialize(),
+				data: data,
 				beforeSend: function() {
 					$('#transfer').html('');
 					$('#transfer').prop('disabled', true);
