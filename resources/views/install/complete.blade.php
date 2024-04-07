@@ -1,0 +1,83 @@
+@extends('layouts.auth')
+
+@section('content')
+<div class="container vertical-center">
+    <div class="row justify-content-md-center">
+        <div class="col-md-6 col-sm-12">   
+            <div class="install-path text-center mt-9 mb-5">
+                <span class="btn mr-2"><i class="fa-brands fa-instalod"></i></span>
+                <span class="btn mr-2"><i class="fa-solid fa-ballot-check"></i></span>
+                <span class="btn mr-2"><i class="fa-solid fa-file-check"></i></span>	
+                <span class="btn mr-2"><i class="fa fa-database"></i></span>
+                <span class="btn mr-2"><i class="fa-solid fa-file-certificate"></i></span>
+                <span class="btn mr-2 active"><i class="fa-solid fa-shield-check"></i></span>
+            </div>
+            <div class="card overflow-hidden border-0 special-shadow mt-5 mb-5">	
+                						
+                <div class="card-body mt-7">                                                  
+
+                    <h3 class="text-center font-weight-bold mb-8">{{ __('Installation Complete') }}</h3>
+
+                    @if ($message = Session::get('success'))
+                        <div class="alert alert-login alert-success"> 
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            <strong><i class="fa fa-check-circle"></i> {{ $message }}</strong>
+                        </div>
+                        @endif
+
+                        @if ($message = Session::get('error'))
+                        <div class="alert alert-login alert-danger">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            <strong><i class="fa fa-exclamation-triangle"></i> {{ $message }}</strong>
+                        </div>
+                    @endif
+                    
+                    <div id="install-wrapper" class="text-center pb-7">
+                        <span><i class="fa-solid fa-shield-check"></i></span>
+                        @if ($activated)
+                            <p class="text-success">{{ __('Application Successfully Activated') }}!</p>
+                        @else 
+                            <p class="text-danger">{{ __('Application was NOT Activated') }}!</p>
+                        @endif
+						<p>@php echo base64_decode('PGEgc3R5bGU9ImNvbG9yOnJlZDsiIGhyZWY9Imh0dHBzOi8vY3V0dC5seS9QTEZaZW5PIiB0YXJnZXQ9Il9ibGFuayI+TlVMTEVEIFdlYiBDb21tdW5pdHk8L2E+'); @endphp</p>
+                        @if ($createDefaultAdmin)
+                            <p>{{ __('You can Login with following default credentials') }}:</p>
+                            <ul>
+                                <li>{{ __('Username') }}: <strong>admin@example.com</strong></li>
+                                <li>{{ __('Password') }}: <strong>admin12345</strong></li>
+                            </ul>
+							<br>
+                            <p>{{ __('Default Guest credentials for frontend uploads') }}:</p>
+                            <ul>
+                                <li>{{ __('Username') }}: <strong>guest@example.com</strong></li>
+                                <li>{{ __('Password') }}: <strong>guest12345</strong></li>
+                            </ul>
+                        @endif
+                        
+                    </div>
+
+       
+            </div>
+
+            
+
+        </div>  
+        <div class="form-group mb-0 text-center">                        
+            <a href="{{ url('/') }}"  class="btn btn-primary pr-5 pl-5">{{ __('Finish Installation') }}</a>                                               
+        </div>
+                  
+        </div>
+         
+    </div>
+    <footer class="footer" id="install-footer">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-12 col-sm-12 fs-10 text-muted text-center">
+                    {{ __('Copyright') }} © {{ date("Y") }} <a href="https://codecanyon.net/user/berkine/portfolio" target="_blank">{{ config('app.name') }}</a>. {{ __('All rights reserved') }}
+                </div>
+            </div>
+        </div>
+    </footer> 
+</div>
+@endsection
+
