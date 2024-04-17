@@ -520,7 +520,7 @@ class UploadController extends Controller
 
                     # Record transfer details 
 
-                    foreach (explode(', ', request('email_to')) as $email_to) {
+                    foreach (explode(',', request('email_to')) ?? [] as $email_to) {
                         $transfer = new Transfer([
                             'user_id' => $user->id,
                             'file_name' => $tmp_file->file,
@@ -556,8 +556,7 @@ class UploadController extends Controller
                     'message' => request('message'),
                     'links' => $links
                 ];
-
-                Mail::to(request('email_to'))
+                Mail::to(explode(',', request('email_to')) ?? [])
                     ->cc(request('email_from'))
                     ->send(new TransferEmail($data));
 
